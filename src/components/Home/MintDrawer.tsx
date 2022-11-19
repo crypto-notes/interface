@@ -33,6 +33,7 @@ import { useDropzone } from 'react-dropzone'
 import { useDebounce } from 'usehooks-ts'
 import { Web3Storage } from 'web3.storage'
 import { ReactComponent as ETHLogo } from '../../assets/images/eth-logo.svg'
+import { ReactComponent as PolygonLogo } from '../../assets/images/polygon-logo.svg'
 import { extractErrorMessage } from '../../utils/helper'
 import { contracts } from '../../utils/contracts'
 import WithTxConfirmation from '../WithTxConfirmation'
@@ -302,7 +303,9 @@ const MintDrawer: FC<MintDrawerProps> = ({ onClose, isOpen, reexecuteQuery }) =>
                 <FormLabel htmlFor='amount'>Deposit Amount</FormLabel>
                 <InputGroup>
                   <InputLeftAddon py={2}>
-                    <ETHLogo height={25} />
+                    {
+                      chain?.id === 80001 ? <PolygonLogo height={25} /> : <ETHLogo height={25} />
+                    }
                   </InputLeftAddon>
                   <NumberInput
                     id='amount'
