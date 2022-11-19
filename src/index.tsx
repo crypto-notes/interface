@@ -12,10 +12,10 @@ import * as serviceWorker from './serviceWorker'
 import { makeGraphClient } from './utils/subgraphQuery'
 
 const container = document.getElementById('root')
-if (!container) throw new Error('Failed to find the root element');
+if (!container) throw new Error('Failed to find the root element')
 const root = ReactDOM.createRoot(container)
 
-const testnets = [chain.goerli] // , chain.polygonMumbai
+const testnets = [chain.goerli, chain.polygonMumbai]
 // const mainnets = [chain.mainnet, chain.polygon]
 const supportedChains = testnets // process.env.NODE_ENV === 'production' ? mainnets : testnets
 
@@ -29,7 +29,7 @@ const { chains, provider } = configureChains(
 
 const client = createClient(
   getDefaultClient({
-    appName: 'ETH Commemorative Cryptonotes',
+    appName: 'Commemorative Cryptonotes',
     alchemyId: process.env.REACT_APP_ALCHEMY_ID || '',
     chains,
     provider,

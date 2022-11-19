@@ -40,7 +40,8 @@ import { contracts } from '../../utils/contracts'
 import { useLoading } from '../../context/loading-context'
 import WithTxInProgress from '../WithTxInProgress'
 import WithTxConfirmation from '../WithTxConfirmation'
-import Placeholder from '../../assets/images/placeholder.jpeg'
+import Placeholder from '../../assets/images/placeholder.svg'
+import Credit from '../../assets/images/credit.svg'
 import Note from '../../types/note'
 const CryptonotesAbi = require('../../abis/Cryptonotes.json')
 
@@ -497,8 +498,8 @@ const NoteBox: FC<NoteBoxProps> = ({ note, ethInUsd, reexecuteQuery }) => {
   return (
     <>
       <Box maxW='sm' borderWidth='1px' borderRadius='lg' overflow='hidden'>
-        <Flex p={2} pl={2} bgColor={useColorModeValue('teal.800', 'teal.200')}>
-          <Image ml={`${getImage() ? 4 : 'none'}`} w={500} h={200} src={getImage()} fallbackSrc={Placeholder} />
+        <Flex bgColor={useColorModeValue('teal.800', 'teal.200')} justify='center'>
+          <embed src={getImage()} />
         </Flex>
 
         <Box p='6' bgColor={useColorModeValue('gray.200', 'gray.800')}>
@@ -531,9 +532,9 @@ const NoteBox: FC<NoteBoxProps> = ({ note, ethInUsd, reexecuteQuery }) => {
           </Box>
 
           <Box>
-            {`${utils.formatEther(note.value)} ETH`}
+            {`${utils.formatEther(note.value)} ${chain?.id === 5 ? 'ETH' : 'MATIC'}`}
             <Box as='span' color='gray.600' fontSize='md'>
-              &nbsp; {`$${(Number(ethInUsd) * Number(utils.formatEther(note.value))).toFixed(2)}`}
+              &nbsp; {`$${(Number(ethInUsd) * Number(utils.formatEther(note.value))).toFixed(4)}`}
             </Box>
           </Box>
 

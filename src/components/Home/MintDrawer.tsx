@@ -21,17 +21,24 @@ import {
   InputGroup,
   InputLeftAddon,
   useToast,
-  useColorModeValue
+  useColorModeValue,
+  Select,
+  Image,
+  HStack,
+  Spinner
 } from '@chakra-ui/react'
 import { constants, utils } from 'ethers'
 import { useContractWrite, usePrepareContractWrite, useWaitForTransaction, useAccount, useNetwork } from 'wagmi'
+import { useDropzone } from 'react-dropzone'
+import { useDebounce } from 'usehooks-ts'
+import { Web3Storage } from 'web3.storage'
 import { ReactComponent as ETHLogo } from '../../assets/images/eth-logo.svg'
 import { extractErrorMessage } from '../../utils/helper'
 import { contracts } from '../../utils/contracts'
-import { useDebounce } from 'usehooks-ts'
 import WithTxConfirmation from '../WithTxConfirmation'
 import { useLoading } from '../../context/loading-context'
 import WithTxInProgress from '../WithTxInProgress'
+import Credit from '../../assets/images/credit.jpeg'
 
 interface MintDrawerProps {
   onClose: () => void
@@ -50,7 +57,7 @@ const MintDrawer: FC<MintDrawerProps> = ({ onClose, isOpen, reexecuteQuery }) =>
   const toast = useToast()
   const toastBgColor = useColorModeValue('white', 'red')
   const toastWarningBgColor = useColorModeValue('white', 'yellow.900')
-  
+
   const { setIsOverlayLoading, setLoadingText } = useLoading()
   
   const [noteName, setNoteName] = useState<string>('')
@@ -58,7 +65,39 @@ const MintDrawer: FC<MintDrawerProps> = ({ onClose, isOpen, reexecuteQuery }) =>
   const [amount, setAmount] = useState<number>()
   const debouncedAmount = useDebounce(amount, DEBOUNCE_PERIOD)
   const [description, setDescription] = useState<string>('')
+  const [slotImg, setSlotImg] = useState<string>('credit')
+  const [uploadedImg, setUploadedImg] = useState('')
+  const [isUploading, setIsUploading] = useState(false)
+  const [image, setImage] = useState('https://ipfs.io/ipfs/bafkreig4op2kb3ros652lmzitec5ly76dkjtbh23poz2fkq6sscp67i4e4')
   const debouncedDescription = useDebounce(description, DEBOUNCE_PERIOD)
+
+  const onDrop = useCallback(async (acceptedFiles: any) => {
+    try {
+      const file = acceptedFiles[0]
+      if (!file) return
+
+      setIsUploading(true)
+      setUploadedImg(Object.assign(file, { preview: URL.createObjectURL(file) }))
+      
+      const client = new Web3Storage({ token: process.env.REACT_APP_WEB3_STORAGE_API_KEY || '' })
+      const rootCid = await client.put(acceptedFiles)
+      const res = await client.get(rootCid)
+      const files = await res?.files()
+      const cid = files?.[0].cid.toString()
+      setImage(cid ? `https://ipfs.io/ipfs/${cid}` : image)
+    } catch(err) {
+      console.log(err)
+    } finally {
+      setIsUploading(false)
+    }
+  }, [image])
+
+  const {getRootProps, getInputProps, isDragActive} = useDropzone({
+    onDrop,
+    accept: { 'image/*': [] },
+    maxFiles: 1,
+    disabled: isUploading
+  })
 
   const isMintable = (): boolean => {
     return !!address && !!debouncedNoteName && !!debouncedDescription && !!debouncedAmount
@@ -129,7 +168,7 @@ const MintDrawer: FC<MintDrawerProps> = ({ onClose, isOpen, reexecuteQuery }) =>
       {
         name: debouncedNoteName,
         description: debouncedDescription,
-        image: '',
+        image,
         underlying: constants.AddressZero, // zero address for ETH on Ethereum networks
       },
       utils.parseEther(debouncedAmount?.toString() || '0'),
@@ -226,6 +265,10 @@ const MintDrawer: FC<MintDrawerProps> = ({ onClose, isOpen, reexecuteQuery }) =>
     write?.()
   }, [write, setIsOverlayLoading, setLoadingText])
 
+  useEffect(() => {
+    return () => URL.revokeObjectURL((uploadedImg as any).preview)
+  }, [uploadedImg])
+
   return (
     <>
       <Drawer
@@ -287,6 +330,62 @@ const MintDrawer: FC<MintDrawerProps> = ({ onClose, isOpen, reexecuteQuery }) =>
                 </InputGroup>
               </Box>
 
+              <Box>
+                <FormLabel htmlFor='slotImg'>Background Image</FormLabel>
+                <Select disabled={isUploading || isWriting} id='slotImg' onChange={(e) => setSlotImg(e.target.value)}>
+                  <option value='credit'>Credit Template</option>
+                  <option value='custom'>Customization</option>
+                </Select>
+              </Box>
+
+              {
+                slotImg === 'custom' ? (
+                  <>
+                    {
+                      !isUploading && (
+                        <Box
+                          {...getRootProps()}
+                          style={{
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            padding: '20px',
+                            borderWidth: '2px',
+                            borderRadius: '2px',
+                            borderColor: '#eeeeee',
+                            borderStyle: 'dashed',
+                            backgroundColor: '#fafafa',
+                            color: '#bdbdbd',
+                            outline: 'none',
+                            transition: 'border .24s ease-in-out'
+                          }}
+                        >
+                          <input {...getInputProps()} />
+                          {
+                            isDragActive ?
+                              <p>Drop the file here ...</p> :
+                              <p>Drag 'n' drop your file here, or click to select file</p>
+                          }
+                        </Box>
+                      )
+                    }
+
+                    <HStack justify={'center'}>
+                      {
+                        isUploading ? <Spinner /> : uploadedImg ? ( 
+                          <Image h={200} src={(uploadedImg as any).preview} onLoad={() => { URL.revokeObjectURL((uploadedImg as any).preview) }} />
+                        ) : ''
+                      }
+                    </HStack>
+                  </>
+                ) : slotImg === 'credit' && (
+                  <HStack justify={'center'}>
+                    <Image w={500} h={200} src={Credit} />
+                  </HStack>
+                )
+              }
+
               {/* <Box>
                 <FormLabel htmlFor='underlying'>Underlying Asset</FormLabel>
                 <Select id='underlying'>
@@ -314,7 +413,7 @@ const MintDrawer: FC<MintDrawerProps> = ({ onClose, isOpen, reexecuteQuery }) =>
             <Button
               colorScheme='cyan'
               onClick={() => onMinting()}
-              disabled={!isMintable() || !write || isLoading || isWriting}
+              disabled={!isMintable() || !write || isLoading || isWriting || isUploading}
               isLoading={isLoading || isWriting}
               loadingText={'Minting...'}
             >Mint</Button>

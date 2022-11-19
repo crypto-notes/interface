@@ -20,7 +20,7 @@ const MyCryptonotes: FC<MyCryptonotesProps> = ({ isOpen, onClose }) => {
   const { chain } = useNetwork()
 
   const { data: priceData } = useContractRead({
-    address: '0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e',
+    address: chain?.id === 80001 ? '0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada' : '0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e',
     abi: aggregatorV3InterfaceABI,
     functionName: 'latestRoundData',
   })
